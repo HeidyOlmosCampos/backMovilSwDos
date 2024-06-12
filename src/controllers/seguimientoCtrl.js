@@ -227,9 +227,20 @@ class SeguimientoCtrl {
       const venta = await VentaServicioCtrl.obtenerVentaXidERP(VentaServicioId);
       const servicioChap = await ServicioChaperiaCtrl.obtenerServicioXidERP(ServicioChaperioId);
 
-      if(!vehiculo || !venta || !servicioChap){
+
+      if(!vehiculo){
         response.ok = false;
-        response.msg = "No existe el detalle";
+        response.msg = "No existe el vehiculo";
+        return res.status(400).send(response.getResponseData());
+      }
+      if(!venta){
+        response.ok = false;
+        response.msg = "No existe la venta";
+        return res.status(400).send(response.getResponseData());
+      }
+      if(!servicioChap){
+        response.ok = false;
+        response.msg = "No existe el servicio";
         return res.status(400).send(response.getResponseData());
       }
 

@@ -124,7 +124,7 @@ class VentaServicioCtrl {
   async obtenerVentaXidERP(idERP) {
     try {
       
-      const ventas = await Vehiculo.findAll({
+      const ventas = await VentaServicio.findAll({
         where : {
           idERP : idERP
         },
