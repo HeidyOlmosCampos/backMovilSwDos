@@ -6,6 +6,9 @@ const ServicioChaperio = require("../models/servicioChaperia");
 const SeguimientoServicio = require("../models/seguimientoServicio");
 const MarcaVehiculo = require("../models/marcaVehiculo");
 const Vehiculo = require("../models/vehiculo");
+const VehiculoCtrl = require('./vehiculoCtrl');
+const VentaServicioCtrl = require('./ventaServicioCtrl');
+const ServicioChaperiaCtrl = require('./servicioChaperiaCtrl');
 
 class SeguimientoCtrl {
   constructor() {}
@@ -202,54 +205,110 @@ class SeguimientoCtrl {
     }
   }
 
-  async _calcularPrecioEnBaseaEtiquetayMarca(etiqueta, idMarca) {
+  async actualizarSeguimiento(req, res){
+    var response = new ResponseResult();
     try {
-      let precioEstimado = 0;
-      let nombreServicio = CategoriaServicio.DESCONOCIDA;
-      let descripcionServicio = CategoriaServicio.DESCONOCIDA;
-      if (etiqueta !== CategoriaServicio.DESCONOCIDA) {
-        const serviciosChaperio = await ServicioChaperio.findAll({
-          where: {
-            iaLabel: etiqueta,
-            tipo: TipoServicio.CHAPERIO,
-          },
-          raw: false,
-        });
 
-        const marcasVehiculo = await MarcaVehiculo.findAll({
-          where: {
-            id: idMarca,
-          },
-          raw: false,
-        });
-
-        let tarifaBaseServicio = 0;
-        let incrementoServicio = 0;
-        if (serviciosChaperio.length > 0) {
-          const primerServicio = serviciosChaperio[0];
-          tarifaBaseServicio = primerServicio.tarifaBase;
-          nombreServicio = primerServicio.nombre;
-          descripcionServicio = primerServicio.descripcion;
-        }
-
-        if (marcasVehiculo.length > 0) {
-          const primerMarca = marcasVehiculo[0];
-          incrementoServicio = primerMarca.porcentaje;
-        }
-
-        precioEstimado =
-          tarifaBaseServicio + tarifaBaseServicio * (incrementoServicio / 100);
+      if (!req.body) {
+        response.ok = false;
+        response.msg = "No se recibieron los parametros";
+        return res.status(400).send(response.getResponseData());
       }
 
-      return {
-        nombreServicio,
-        descripcionServicio,
-        precioEstimado,
-      };
+      let fechaInicio = req.body.fechaInicio;
+      let fechaFin = req.body.fechaFin;
+      let estado = req.body.estado;
+      let observacion = req.body.observacion;
+      let VehiculoId = req.body.VehiculoId; //este es del erp
+      let VentaServicioId = req.body.VentaServicioId; //este del erp
+      let ServicioChaperioId = req.body.ServicioChaperioId; //este es del erp
+
+      const vehiculo = await VehiculoCtrl.obtenerVehiculoXidERP(VehiculoId);
+      const venta = await VentaServicioCtrl.obtenerVentaXidERP(VentaServicioId);
+      const servicioChap = await ServicioChaperiaCtrl.obtenerServicioXidERP(ServicioChaperioId);
+
+      if(!vehiculo || !venta || !servicioChap){
+        response.ok = false;
+        response.msg = "No existe el detalle";
+        return res.status(400).send(response.getResponseData());
+      }
+
+      VehiculoId = vehiculo.id; //este es del erp
+      VentaServicioId = venta.id; //este del erp
+      ServicioChaperioId = servicioChap.id; //este es del erp
+
+      let seguimiento = await this.obtenerSeguimientoServicio(VehiculoId, VentaServicioId, ServicioChaperioId);
+      if(!seguimiento){
+        response.ok = false;
+        response.msg = "No existe el detalle";
+        return res.status(400).send(response.getResponseData());
+      }
+
+      let seguimientoActualizar = {
+        fechaInicio,
+        fechaFin,
+        estado,
+        observacion,
+        VehiculoId,
+        VentaServicioId,
+        ServicioChaperioId,
+      }
+
+      let seguimientoActualizado = await this.actualizarSeguimientoServicioBD(seguimiento.id, seguimientoActualizar);
+
+      response.ok = true;
+      response.msg = "Seguimiento Actualizado";
+      response.data = seguimientoActualizado;
+
+      res.status(200).send(response.getResponseData());
+    } catch (error) {
+      console.log(error);
+      response.ok = false;
+      response.msg = "Error al insertar Vehiculo";
+      res.status(500).send(response.getResponseData());
+    }
+  }
+
+  async obtenerSeguimientoServicio(VehiculoId, VentaServicioId, ServicioChaperioId) {
+    try {
+      const seguimientosServicio = await SeguimientoServicio.findAll({
+        where : {
+          VehiculoId : VehiculoId,
+          VentaServicioId : VentaServicioId,
+          ServicioChaperioId : ServicioChaperioId
+        },
+        raw : false
+      });
+
+      if(seguimientosServicio.length == 0){
+        return null;
+      }
+
+      return seguimientosServicio[0];
     } catch (error) {
       throw error;
     }
   }
+
+  async actualizarSeguimientoServicioBD(id, nuevosDatos) {
+    try {
+      const [numRowsUpdated, [updatedSeguimiento]] = await SeguimientoServicio.update(nuevosDatos, {
+        where: { id: id },
+        returning: true // Esto es útil para obtener el registro actualizado en PostgreSQL
+      });
+  
+      if (numRowsUpdated === 0) {
+        return null;
+      }
+  
+      return updatedSeguimiento;
+    } catch (error) {
+      console.error('Error al actualizar Venta Servicio:', error);
+      throw error;
+    }
+  }
+  
+
 }
 
 module.exports = new SeguimientoCtrl();

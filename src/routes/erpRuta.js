@@ -4,6 +4,7 @@ const MarcaVehiculoCtrl = require('../controllers/marcaVehiculoCtrl');
 const VehiculoCtrl = require('../controllers/vehiculoCtrl');
 const VentaServicioCtrl = require('../controllers/ventaServicioCtrl');
 const ServicioChaperiaCtrl = require('../controllers/servicioChaperiaCtrl');
+const SeguimientoCtrl = require('../controllers/seguimientoCtrl');
 const router = express.Router();
 
 
@@ -19,6 +20,10 @@ router.post('/insertarServicio', (req, res) => ServicioChaperiaCtrl.insertarServ
 // - cabecera: venta servicio
 // - detalle : seguimiento servicio
 router.post('/insertarVenta', (req, res) => VentaServicioCtrl.insertarVenta(req, res));
+
+router.put('/editarSeguimiento', (req, res) => SeguimientoCtrl.actualizarSeguimiento(req, res));
+
+
 
 
 

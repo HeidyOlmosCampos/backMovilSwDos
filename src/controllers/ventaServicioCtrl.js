@@ -121,7 +121,26 @@ class VentaServicioCtrl {
     }
   }
 
-  
+  async obtenerVentaXidERP(idERP) {
+    try {
+      
+      const ventas = await Vehiculo.findAll({
+        where : {
+          idERP : idERP
+        },
+        raw : false
+      });
+
+      if(ventas.length == 0){
+        return null;
+      }
+
+      return ventas[0];
+
+    } catch (error) {
+      throw error;
+    }
+  }
 
 
 }
