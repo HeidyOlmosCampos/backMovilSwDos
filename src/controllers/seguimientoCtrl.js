@@ -1,4 +1,3 @@
-
 const { TipoServicio, CategoriaServicio } = require("../constant/constantes");
 const { analizarImagen } = require("../services/modeloIA");
 const ResponseResult = require("../models/responseResult");
@@ -23,7 +22,7 @@ class SeguimientoCtrl {
 
       const serviciosChaperio = await VentaServicio.findAll({
         where: {
-          codigoSeguimiento: req.params.codigoSeguimiento
+          codigoSeguimiento: req.params.codigoSeguimiento,
         },
         raw: false,
       });
@@ -36,27 +35,62 @@ class SeguimientoCtrl {
 
       const seguimientoServicios = await SeguimientoServicio.findAll({
         where: {
-          VentaServicioId: serviciosChaperio[0].id
+          VentaServicioId: serviciosChaperio[0].id,
         },
         raw: false,
       });
-
       
-      if (seguimientoServicios.length == 0) {
-        response.ok = false;
-        response.msg = "No existen Servicios asociados a este codigo";
-        return res.status(400).send(response.getResponseData());
-      }
+
+      let seguimientoServiciosArray = [];
+
+      const promises = seguimientoServicios.map(async (servicio) => {
+        const vehiculos = await Vehiculo.findAll({
+          where: {
+            id: servicio.VehiculoId,
+          },
+          raw: false,
+        });
+        if (vehiculos.length == 0) {
+          response.ok = false;
+          response.msg = "No se encuentra el vehiculo asociado";
+          return res.status(400).send(response.getResponseData());
+        }
+
+        const serviciosTaller = await ServicioChaperio.findAll({
+          where: {
+            id: servicio.ServicioChaperioId,
+          },
+          raw: false,
+        });
+        if (serviciosTaller.length == 0) {
+          response.ok = false;
+          response.msg = "No se encuentra la venta asociada";
+          return res.status(400).send(response.getResponseData());
+        }
+
+        let servicioData = {
+          idServicio: servicio.id,
+          fechaInicioServicio: servicio.fechaInicio,
+          fechaFinServicio: servicio.fechaFin,
+          estadoServicio: servicio.estado,
+          nombreServicio: serviciosTaller[0].nombre,
+          matriculaVehiculo: vehiculos[0].matricula,
+        };
+
+        seguimientoServiciosArray.push(servicioData);
+      });
+
+      await Promise.all(promises);
 
       response.ok = true;
       response.msg = "Servicios asociados al codigo de seguimiento";
-      response.data = seguimientoServicios;
+      response.data = seguimientoServiciosArray;
       res.status(200).send(response.getResponseData());
-
     } catch (error) {
       console.log(error);
       response.ok = false;
-      response.msg = "Error al obtener los servicios asociados al codigo de seguimiento";
+      response.msg =
+        "Error al obtener los servicios asociados al codigo de seguimiento";
       res.status(500).send(response.getResponseData());
     }
   }
@@ -72,7 +106,7 @@ class SeguimientoCtrl {
 
       const seguimientoServicios = await SeguimientoServicio.findAll({
         where: {
-          id: req.params.id
+          id: req.params.id,
         },
         raw: false,
       });
@@ -82,13 +116,12 @@ class SeguimientoCtrl {
         return res.status(400).send(response.getResponseData());
       }
       const seguimientoServicio = seguimientoServicios[0];
-      
 
       const vehiculos = await Vehiculo.findAll({
         where: {
-          id: seguimientoServicio.VehiculoId
+          id: seguimientoServicio.VehiculoId,
         },
-        raw: false
+        raw: false,
       });
       if (vehiculos.length == 0) {
         response.ok = false;
@@ -97,12 +130,11 @@ class SeguimientoCtrl {
       }
       const vehiculo = vehiculos[0];
 
-
       const marcasVehiculo = await MarcaVehiculo.findAll({
         where: {
-          id: vehiculo.MarcaVehiculoId
+          id: vehiculo.MarcaVehiculoId,
         },
-        raw: false
+        raw: false,
       });
       if (marcasVehiculo.length == 0) {
         response.ok = false;
@@ -111,12 +143,11 @@ class SeguimientoCtrl {
       }
       const marcaVehiculo = marcasVehiculo[0];
 
-
       const serviciosTaller = await ServicioChaperio.findAll({
         where: {
-          id: seguimientoServicio.ServicioChaperioId
+          id: seguimientoServicio.ServicioChaperioId,
         },
-        raw: false
+        raw: false,
       });
       if (serviciosTaller.length == 0) {
         response.ok = false;
@@ -124,13 +155,12 @@ class SeguimientoCtrl {
         return res.status(400).send(response.getResponseData());
       }
       const servicioTaller = serviciosTaller[0];
-      
 
       const ventaServicios = await VentaServicio.findAll({
         where: {
-          id: seguimientoServicio.VentaServicioId
+          id: seguimientoServicio.VentaServicioId,
         },
-        raw: false
+        raw: false,
       });
       if (ventaServicios.length == 0) {
         response.ok = false;
@@ -138,7 +168,6 @@ class SeguimientoCtrl {
         return res.status(400).send(response.getResponseData());
       }
       const venta = ventaServicios[0];
-
 
       const detalleServicio = {
         idVenta: venta.id,
@@ -149,6 +178,7 @@ class SeguimientoCtrl {
         colorVehiculo: vehiculo.color,
         modeloVehiculo: vehiculo.nombreModelo,
         descripcionVehiculo: vehiculo.descripcion,
+        marcaVehiculo: marcaVehiculo.nombre,
 
         nombreServicio: servicioTaller.nombre,
         descripcionServicio: servicioTaller.descripcion,
@@ -157,12 +187,11 @@ class SeguimientoCtrl {
         fechaFinSeguimiento: seguimientoServicio.fechaFin,
         estadoSeguimiento: seguimientoServicio.estado,
         descripcionSeguimiento: seguimientoServicio.observacion,
-      }
+      };
 
       response.ok = true;
       response.msg = "Detalle del servicio recuperado exitosamente";
       response.data = detalleServicio;
-
 
       res.status(200).send(response.getResponseData());
     } catch (error) {
@@ -178,45 +207,45 @@ class SeguimientoCtrl {
       let precioEstimado = 0;
       let nombreServicio = CategoriaServicio.DESCONOCIDA;
       let descripcionServicio = CategoriaServicio.DESCONOCIDA;
-      if(etiqueta !== CategoriaServicio.DESCONOCIDA){
+      if (etiqueta !== CategoriaServicio.DESCONOCIDA) {
         const serviciosChaperio = await ServicioChaperio.findAll({
           where: {
             iaLabel: etiqueta,
-            tipo: TipoServicio.CHAPERIO
+            tipo: TipoServicio.CHAPERIO,
           },
           raw: false,
         });
 
         const marcasVehiculo = await MarcaVehiculo.findAll({
           where: {
-            id: idMarca
+            id: idMarca,
           },
           raw: false,
         });
-  
+
         let tarifaBaseServicio = 0;
         let incrementoServicio = 0;
-        if(serviciosChaperio.length > 0){
+        if (serviciosChaperio.length > 0) {
           const primerServicio = serviciosChaperio[0];
-          tarifaBaseServicio = primerServicio.tarifaBase; 
-          nombreServicio = primerServicio.nombre
+          tarifaBaseServicio = primerServicio.tarifaBase;
+          nombreServicio = primerServicio.nombre;
           descripcionServicio = primerServicio.descripcion;
         }
 
-        if(marcasVehiculo.length > 0){
+        if (marcasVehiculo.length > 0) {
           const primerMarca = marcasVehiculo[0];
           incrementoServicio = primerMarca.porcentaje;
         }
-        
-        precioEstimado = tarifaBaseServicio + tarifaBaseServicio * (incrementoServicio / 100);
+
+        precioEstimado =
+          tarifaBaseServicio + tarifaBaseServicio * (incrementoServicio / 100);
       }
 
       return {
         nombreServicio,
         descripcionServicio,
-        precioEstimado
+        precioEstimado,
       };
-
     } catch (error) {
       throw error;
     }

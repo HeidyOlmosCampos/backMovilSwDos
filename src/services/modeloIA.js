@@ -24,6 +24,7 @@ async function loadImageFromBuffer(buffer) {
 
 async function analizarImagen(imagen) {
   try {
+
     const nombreModelo = 'model.json';
     const direccionModelo = path.resolve(__dirname, nombreModelo);
     const modelPath = `file://${direccionModelo}`;
@@ -58,7 +59,7 @@ async function analizarImagen(imagen) {
     return { label: etiqueta, confidence: confianza };
 
   } catch (error) {
-    throw new Error('Error al procesar la imagen');
+    throw error;
   }
 }
 

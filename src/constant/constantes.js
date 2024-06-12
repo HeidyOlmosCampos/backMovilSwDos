@@ -25,6 +25,7 @@ const CategoriaServicio = Object.freeze({
   LLANTA_PINCHADA: 'llantaPinchada',
   RAYADURA: 'rayadura',
   VIDRIO_ROTO: 'vidrioRoto',
+  SIN_CATEGORIA: 'SIN CATEGORIA',
   DESCONOCIDA: 'DESCONOCIDO'
 });
 

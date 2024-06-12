@@ -25,14 +25,19 @@ app.use(bodyparser.json({ limit: "15mb" }));
 
 // routes
 // app.use("/api", require("./src/routes/prueba"));
-app.use("/api", require("./src/routes/preInspeccionRuta"));
+app.use("/apiMovil", require("./src/routes/preInspeccionRuta"));
+app.use("/apiErp", require("./src/routes/erpRuta"));
 
 // Start Server
 const startServer = async () => {
   try {
     await dbConnection();
     await syncModels();
-    server.listen(app.get("port"), () => {
+    // server.listen(app.get("port"), () => {
+    //   console.log("Taller mecanico servicio en el puerto ", app.get("port"));
+    // });
+
+    server.listen(app.get("port"), '0.0.0.0', () => {
       console.log("Taller mecanico servicio en el puerto ", app.get("port"));
     });
 

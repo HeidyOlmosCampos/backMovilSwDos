@@ -4,7 +4,7 @@ const { analizarImagen } = require("../services/modeloIA");
 const ResponseResult = require("../models/responseResult");
 const ServicioChaperio = require("../models/servicioChaperia");
 const MarcaVehiculo = require("../models/marcaVehiculo");
-const { ExceptionMessages } = require("@google-cloud/storage/build/src/storage");
+
 
 class PreInspeccionCtrl {
   constructor() {}
@@ -56,7 +56,7 @@ class PreInspeccionCtrl {
 
   async _calcularPrecioEnBaseaEtiquetayMarca(etiqueta, idMarca) {
     try {
-      let precioEstimado = 0;
+      let precioEstimado = 0.0;
       let nombreServicio = CategoriaServicio.DESCONOCIDA;
       let descripcionServicio = CategoriaServicio.DESCONOCIDA;
       if(etiqueta !== CategoriaServicio.DESCONOCIDA){
@@ -90,6 +90,7 @@ class PreInspeccionCtrl {
         }
         
         precioEstimado = tarifaBaseServicio + tarifaBaseServicio * (incrementoServicio / 100);
+        precioEstimado = precioEstimado.toFixed(2);
       }
 
       return {

@@ -1,10 +1,5 @@
 
-const { TipoServicio, CategoriaServicio } = require("../constant/constantes");
-const { analizarImagen } = require("../services/modeloIA");
 const ResponseResult = require("../models/responseResult");
-const VentaServicio = require("../models/ventaServicio");
-const ServicioChaperio = require("../models/servicioChaperia");
-const SeguimientoServicio = require("../models/seguimientoServicio");
 const MarcaVehiculo = require("../models/marcaVehiculo");
 
 class MarcaVehiculoCtrl {
@@ -33,6 +28,68 @@ class MarcaVehiculoCtrl {
       res.status(500).send(response.getResponseData());
     }
   }
+
+
+  async insertarMarca(req, res) {
+    var response = new ResponseResult();
+    try {
+
+      if (!req.body) {
+        response.ok = false;
+        response.msg = "No se recibieron los parametros";
+        return res.status(400).send(response.getResponseData());
+      }
+      
+      const nombre = req.body.nombre;
+      const porcentaje = req.body.porcentaje;
+      const idERP = req.body.idERP;
+      const nuevaMarca = await this.insertarMarcaVehiculoBD(nombre, porcentaje, idERP);
+
+      response.ok = true;
+      response.msg = "Marca insertada";
+      response.data = nuevaMarca;
+
+      res.status(200).send(response.getResponseData());
+    } catch (error) {
+      console.log(error);
+      response.ok = false;
+      response.msg = "Error al insertar MarcaVehiculo";
+      res.status(500).send(response.getResponseData());
+    }
+  }
+
+
+  async insertarMarcaVehiculoBD(nombre, porcentaje, idERP) {
+    try {
+      const nuevaMarca = await MarcaVehiculo.create({ nombre, porcentaje, idERP });
+      return nuevaMarca;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async obtenerMarcaVehiculoXidERP(idERP) {
+    try {
+      
+      const marcasVehiculo = await MarcaVehiculo.findAll({
+        where : {
+          idERP : idERP
+        },
+        raw : false
+      });
+
+      if(marcasVehiculo.length == 0){
+        return null;
+      }
+
+      return marcasVehiculo[0];
+
+    } catch (error) {
+      throw error;
+    }
+  }
+
+
 
 }
 
